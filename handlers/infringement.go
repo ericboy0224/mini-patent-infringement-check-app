@@ -1,6 +1,10 @@
 package handlers
 
 import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/ericboy0224/patlytics-takehome/domains"
 	"github.com/ericboy0224/patlytics-takehome/models"
 	"github.com/ericboy0224/patlytics-takehome/utils"
@@ -28,33 +32,35 @@ func HandleInfringementCheck(c *gin.Context) {
 	}
 
 	// Load patents and products
-	patents, err := utils.LoadPatents("data/patents.json")
+	projectRoot := "." // Use relative path since we're in the container
+	pathStr := filepath.Join(projectRoot, "data", "patents.json")
+	patents, err := utils.LoadPatents(pathStr)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to load patents"})
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to load patents: %v", err)})
 		return
 	}
 
-	companies, err := utils.LoadCompanyProducts("data/company_products.json")
+	companies, err := utils.LoadCompanyProducts(filepath.Join(projectRoot, "data", "company_products.json"))
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to load company products"})
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to load company products: %v", err)})
 		return
 	}
 
-	// Transform products to client products
-	var clientProducts []*models.ClientProduct
+	// Filter companies based on the requested company name
+	var filteredCompanies []*models.Company
 	for _, company := range companies {
-		if company.Name == request.CompanyName {
-			clientProducts, err = company.ToClientProducts()
-			if err != nil {
-				c.JSON(500, gin.H{"error": "Failed to transform products: " + err.Error()})
-				return
-			}
-			break
+		if strings.Contains(strings.ToUpper(company.Name), strings.ToUpper(request.CompanyName)) {
+			filteredCompanies = append(filteredCompanies, &company)
 		}
 	}
 
+	if len(filteredCompanies) == 0 {
+		c.JSON(404, gin.H{"error": "Company not found"})
+		return
+	}
+
 	// Run infringement analysis
-	infringingProducts, err := domains.AnalyzeInfringement(request.PublicationNumber, request.CompanyName, patents, clientProducts)
+	analysis, err := domains.AnalyzeInfringement(request.PublicationNumber, request.CompanyName, patents, filteredCompanies[0].Products)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to analyze infringement: " + err.Error()})
 		return
@@ -63,9 +69,7 @@ func HandleInfringementCheck(c *gin.Context) {
 	// Return detailed response
 	c.JSON(200, gin.H{
 		"status": "success",
-		"data": gin.H{
-			"infringing_products": infringingProducts,
-		},
+		"data":   analysis,
 	})
 }
 
