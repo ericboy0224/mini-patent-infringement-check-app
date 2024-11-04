@@ -1,0 +1,58 @@
+package models
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"time"
+)
+
+// Patent represents a patent record
+type Patent struct {
+	ID                 int       `json:"id"`
+	PublicationNumber  string    `json:"publication_number"`
+	Title              string    `json:"title"`
+	AISummary          string    `json:"ai_summary"`
+	RawSourceURL       string    `json:"raw_source_url"`
+	Assignee           string    `json:"assignee"`
+	Inventors          string    `json:"inventors"` // JSON string containing inventor objects
+	PriorityDate       string    `json:"priority_date"`
+	ApplicationDate    string    `json:"application_date"`
+	GrantDate          string    `json:"grant_date"`
+	Abstract           string    `json:"abstract"`
+	Description        string    `json:"description"`
+	Claims             string    `json:"claims"` // JSON string containing claim objects
+	Jurisdictions      string    `json:"jurisdictions"`
+	Classifications    string    `json:"classifications"` // JSON string containing classification objects
+	ApplicationEvents  string    `json:"application_events"`
+	Citations          string    `json:"citations"` // JSON string containing citation objects
+	ImageURLs          string    `json:"image_urls"`
+	Landscapes         string    `json:"landscapes"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	PublishDate        string    `json:"publish_date"`
+	CitationsNonPatent string    `json:"citations_non_patent"`
+	Provenance         string    `json:"provenance"`
+	AttachmentURLs     *string   `json:"attachment_urls"` // Pointer since it can be null
+}
+
+// PatentDTO represents a simplified patent record for client-side use
+type PatentDTO struct {
+	ID     string   `json:"patent_id"`
+	Claims []string `json:"claims"`
+}
+
+// ToDTO converts a Patent to PatentDTO
+func (p *Patent) ToDTO() (*PatentDTO, error) {
+	// Since Claims is stored as a JSON string in the original model,
+	// we'll need to parse it to convert to []string
+	var claims []string
+	if err := json.Unmarshal([]byte(p.Claims), &claims); err != nil {
+		return nil, fmt.Errorf("failed to parse claims: %w", err)
+	}
+
+	return &PatentDTO{
+		ID:     strconv.Itoa(p.ID),
+		Claims: claims,
+	}, nil
+}
