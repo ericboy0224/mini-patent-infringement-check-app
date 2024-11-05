@@ -66,6 +66,7 @@ func AnalyzeInfringement(publicationNumber string, companyName string, patents [
 		infringingProducts = infringingProducts[:2]
 	}
 
+	// TODO use openAI for output
 	// Create analysis result
 	analysis := &models.PatentAnalysis{
 		AnalysisID:            generateAnalysisID(),

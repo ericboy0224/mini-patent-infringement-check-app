@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -46,26 +45,6 @@ type PatentDTO struct {
 type ClaimItem struct {
 	Num  string `json:"num"`
 	Text string `json:"text"`
-}
-
-// ToDTO converts a Patent to PatentDTO
-func (p *Patent) ToDTO() (*PatentDTO, error) {
-	// Parse the claims JSON string into array of ClaimItem
-	var claimItems []ClaimItem
-	if err := json.Unmarshal([]byte(p.Claims), &claimItems); err != nil {
-		return nil, fmt.Errorf("failed to parse claims: %w", err)
-	}
-
-	// Extract just the text from each claim
-	claims := make([]string, len(claimItems))
-	for i, claim := range claimItems {
-		claims[i] = claim.Text
-	}
-
-	return &PatentDTO{
-		ID:     strconv.Itoa(p.ID),
-		Claims: claims,
-	}, nil
 }
 
 // ExtractClaims parses the Claims JSON string and returns a slice of claim texts
