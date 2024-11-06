@@ -5,15 +5,22 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Create data directory
-RUN mkdir -p /app/data
+# Create required directories
+RUN mkdir -p /app/data /app/prompts
 
-# Copy the data files first
+# Copy static files
 COPY data/*.json /app/data/
+COPY prompts/*.prompt /app/prompts/
+COPY .env ./
 
-# Then copy the rest of the application
+# Copy source code
 COPY . .
 
+# Build the application
 RUN go build -o app
+
+# Set environment variable from .env file
+ENV $(cat .env | xargs)
+
 EXPOSE 8080
 CMD ["./app"]
