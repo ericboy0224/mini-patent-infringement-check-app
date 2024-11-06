@@ -15,4 +15,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build the application
-CMD ["pnpm", "build"]
+RUN pnpm build
+
+# Keep container alive for development
+CMD ["tail", "-f", "/dev/null"]

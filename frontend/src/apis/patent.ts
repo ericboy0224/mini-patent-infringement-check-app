@@ -39,6 +39,7 @@ export interface InfringementResult {
 
 export async function searchInfringingProducts(params: PatentSearchParams): Promise<InfringementResult[]> {
   try {
+    console.log(API_URL)
     const response = await fetch(`${API_URL}/infringement-check`, {
       method: 'POST',
       headers: {

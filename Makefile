@@ -35,6 +35,7 @@ stop:
 clean:
 	$(DOCKER_COMPOSE) down -v
 	docker system prune -f
+	cd frontend && rm -rf node_modules && rm -rf dist
 
 # Run tests
 test:
@@ -51,12 +52,23 @@ restart: stop run
 # Frontend commands
 frontend-install:
 	cd frontend && pnpm install
-
-# Development commands
-dev-build: frontend-install build run logs
+	cd frontend && pnpm build
 
 # One-command setup for first time run
-setup: frontend-install build run
+setup:
+	@echo "Installing frontend dependencies..."
+	$(MAKE) frontend-install
+	@echo "Building Docker images..."
+	$(MAKE) build
+	@echo "Starting services..."
+	$(MAKE) run
 	@echo "Waiting for services to start..."
 	@sleep 5
 	@echo "Application is running at http://localhost:8080"
+
+# Development commands
+dev-build:
+	$(MAKE) frontend-install
+	$(MAKE) build
+	$(MAKE) run
+	$(MAKE) logs
