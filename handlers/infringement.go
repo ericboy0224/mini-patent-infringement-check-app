@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ericboy0224/patlytics-takehome/domains"
 	"github.com/ericboy0224/patlytics-takehome/models"
@@ -78,28 +79,52 @@ func HandleInfringementCheck(c *gin.Context) {
 		return
 	}
 
-	analysis, err := domains.AnalyzeInfringementWithGroq(claims, filteredCompanies[0].Products)
+	// Check if analysis exists in MongoDB
+	existingAnalysis, err := domains.GetExistingAnalysis(c, request.PublicationNumber, filteredCompanies[0].Name)
 	if err != nil {
-		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to analyze products: %v", err)))
+		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to check existing analysis: %v", err)))
 		return
 	}
 
-	var infringingProducts []map[string]interface{}
-	for _, product := range analysis.InfringingProducts {
-		infringingProducts = append(infringingProducts, map[string]interface{}{
-			"product_name":            product.ProductName,
-			"infringement_likelihood": product.InfringementLikelihood,
-			"relevant_claims":         product.RelevantClaims,
-			"explanation":             product.Explanation,
-			"specific_features":       product.SpecificFeatures,
-		})
-	}
+	var responseData gin.H
+	if existingAnalysis != nil {
+		responseData = gin.H{
+			"analysis_id":             existingAnalysis.ID.Hex(),
+			"analysis_date":           existingAnalysis.AnalysisDate,
+			"patent_id":               existingAnalysis.PatentID,
+			"company_name":            existingAnalysis.CompanyName,
+			"infringing_products":     existingAnalysis.InfringingProducts,
+			"overall_risk_assessment": existingAnalysis.OverallRiskAssessment,
+		}
+	} else {
+		analysis, err := domains.AnalyzeInfringementWithGroq(claims, filteredCompanies[0].Products)
+		if err != nil {
+			c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to analyze products: %v", err)))
+			return
+		}
 
-	responseData := gin.H{
-		"patent_id":               request.PublicationNumber,
-		"company_name":            filteredCompanies[0].Name,
-		"infringing_products":     infringingProducts,
-		"overall_risk_assessment": analysis.OverallRiskAssessment,
+		// Create new analysis record
+		newAnalysis := &models.AnalysisRecord{
+			PatentID:              request.PublicationNumber,
+			CompanyName:           filteredCompanies[0].Name,
+			AnalysisDate:          time.Now(),
+			InfringingProducts:    analysis.InfringingProducts,
+			OverallRiskAssessment: analysis.OverallRiskAssessment,
+		}
+
+		if err := domains.SaveAnalysis(c, newAnalysis); err != nil {
+			c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to save analysis: %v", err)))
+			return
+		}
+
+		responseData = gin.H{
+			"analysis_id":             newAnalysis.ID.Hex(),
+			"analysis_date":           newAnalysis.AnalysisDate,
+			"patent_id":               newAnalysis.PatentID,
+			"company_name":            newAnalysis.CompanyName,
+			"infringing_products":     newAnalysis.InfringingProducts,
+			"overall_risk_assessment": newAnalysis.OverallRiskAssessment,
+		}
 	}
 
 	c.JSON(200, NewSuccessResponse(responseData, "Infringement check completed successfully"))

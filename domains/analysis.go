@@ -9,21 +9,18 @@ import (
 
 	"github.com/ericboy0224/patlytics-takehome/models"
 	"github.com/firebase/genkit/go/plugins/dotprompt"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	groq "github.com/jpoz/groq"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/ericboy0224/patlytics-takehome/services"
 )
 
-type InfringementAnalysis struct {
-	ProductName            string   `json:"product_name"`
-	InfringementLikelihood string   `json:"infringement_likelihood"`
-	RelevantClaims         []int    `json:"relevant_claims"` // Changed to `int` based on provided data
-	Explanation            string   `json:"explanation"`
-	SpecificFeatures       []string `json:"specific_features"`
-}
-
 type AnalyzeResult struct {
-	InfringingProducts    []InfringementAnalysis `json:"infringing_products"`
-	OverallRiskAssessment string                 `json:"overall_risk_assessment"`
+	InfringingProducts    []models.InfringingProduct `json:"infringing_products"`
+	OverallRiskAssessment string                     `json:"overall_risk_assessment"`
 }
 
 func init() {
@@ -145,4 +142,39 @@ func AnalyzeInfringementWithGroq(patentClaims []string, products []models.Produc
 	}
 
 	return &result, nil
+}
+
+func GetExistingAnalysis(context *gin.Context, patentID, companyName string) (*models.AnalysisRecord, error) {
+	collection := services.GetAnalysisCollection()
+	ctx, cancel := context.Request.Context(), func() {}
+	defer cancel()
+
+	filter := bson.M{
+		"patent_id":    patentID,
+		"company_name": companyName,
+	}
+
+	var result models.AnalysisRecord
+	err := collection.FindOne(ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to query MongoDB: %w", err)
+	}
+
+	return &result, nil
+}
+
+func SaveAnalysis(context *gin.Context, analysis *models.AnalysisRecord) error {
+	collection := services.GetAnalysisCollection()
+	ctx, cancel := context.Request.Context(), func() {}
+	defer cancel()
+
+	_, err := collection.InsertOne(ctx, analysis)
+	if err != nil {
+		return fmt.Errorf("failed to save analysis to MongoDB: %w", err)
+	}
+
+	return nil
 }
