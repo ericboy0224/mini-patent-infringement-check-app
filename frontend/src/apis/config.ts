@@ -1,0 +1,1 @@
+export const API_URL = import.meta.env.PROD ? import.meta.url.replace(/\/assets\/index-\w+\.js\/$/, "/patlytics/v1") : 'http://localhost:5173/patlytics/v1' 

@@ -1,0 +1,109 @@
+import { useState, useEffect } from 'react'
+import { usePatentSearch } from '@/features/patents/hooks/usePatentSearch'
+import { InfringementResult, PatentSearchParams } from '@/apis/patent'
+
+const STORAGE_KEY = 'savedPatentSearches'
+
+interface SearchBlockStates {
+  patentId: string
+  companyName: string
+  isSearching: boolean
+  error: Error | null
+  searchResults?: InfringementResult[]
+  savedSearches: PatentSearchParams[]
+  previousPatentId?: string
+  previousCompanyName?: string;
+  showSaveButton: boolean;
+  isCurrentSearchSaved: boolean;
+}
+
+interface SearchBlockOperations {
+  setPatentId: (value: string) => void
+  setCompanyName: (value: string) => void
+  handleSearch: () => Promise<void>
+  handleSave: () => void
+}
+
+export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
+  const [patentId, setPatentId] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [previousPatentId, setPreviousPatentId] = useState<string>()
+  const [previousCompanyName, setPreviousCompanyName] = useState<string>()
+  const [savedSearches, setSavedSearches] = useState<PatentSearchParams[]>([])
+  const { mutate, isPending, error, data } = usePatentSearch()
+  const showSaveButton = !!(data?.length && previousPatentId && previousCompanyName);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      setSavedSearches(JSON.parse(saved))
+    }
+  }, [])
+
+  const handleSearch = async () => {
+    if (!patentId && !companyName) {
+      console.warn('Please enter at least one search term')
+      return
+    }
+
+    mutate(
+      { patent_id: patentId, company_name: companyName },
+      {
+        onSuccess: () => {
+          setPreviousPatentId(patentId)
+          setPreviousCompanyName(companyName)
+        }
+      }
+    )
+  }
+
+  const handleSave = () => {
+    if (!previousPatentId && !previousCompanyName) {
+      console.warn('No previous search to save')
+      return
+    }
+
+    const newSearch: PatentSearchParams = {
+      patent_id: previousPatentId as string,
+      company_name: previousCompanyName as string
+    }
+
+    const updatedSearches = [
+      newSearch,
+      ...savedSearches.filter(search =>
+        !(search.patent_id === previousPatentId && search.company_name === previousCompanyName)
+      )
+    ]
+
+    setSavedSearches(updatedSearches)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSearches))
+  }
+
+  const isCurrentSearchSaved = savedSearches.some(
+    search => 
+      search.patent_id === previousPatentId && 
+      search.company_name === previousCompanyName
+  );
+
+  const states: SearchBlockStates = {
+    patentId,
+    companyName,
+    isSearching: isPending,
+    error,
+    searchResults: data,
+    savedSearches,
+    previousPatentId,
+    previousCompanyName,
+    showSaveButton,
+    isCurrentSearchSaved,
+  }
+
+  const operations: SearchBlockOperations = {
+    setPatentId,
+    setCompanyName,
+    handleSearch,
+    handleSave
+  }
+
+  return [states, operations]
+} 
