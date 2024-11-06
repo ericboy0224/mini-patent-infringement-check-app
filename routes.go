@@ -7,5 +7,4 @@ import (
 
 func setupRoutes(router *gin.Engine) {
 	router.POST("/infringement-check", handlers.HandleInfringementCheck)
-	router.GET("/saved-reports", handlers.HandleGetReports) // Optional
 }

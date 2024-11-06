@@ -104,7 +104,3 @@ func HandleInfringementCheck(c *gin.Context) {
 
 	c.JSON(200, NewSuccessResponse(responseData, "Infringement check completed successfully"))
 }
-
-func HandleGetReports(c *gin.Context) {
-	c.JSON(200, NewSuccessResponse("<reports here>", "Saved reports retrieved successfully"))
-}
