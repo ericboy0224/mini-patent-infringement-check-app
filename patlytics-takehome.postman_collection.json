@@ -7,63 +7,6 @@
 	},
 	"item": [
 		{
-			"name": "Save reports",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/saved-reports",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"saved-reports"
-					]
-				}
-			},
-			"response": [
-				{
-					"name": "Example",
-					"originalRequest": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:8080/saved-reports",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"saved-reports"
-							]
-						}
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
-						{
-							"key": "Content-Type",
-							"value": "application/json; charset=utf-8"
-						},
-						{
-							"key": "Date",
-							"value": "Mon, 04 Nov 2024 06:56:55 GMT"
-						},
-						{
-							"key": "Content-Length",
-							"value": "61"
-						}
-					],
-					"cookie": [],
-					"body": "{\n    \"data\": \"<reports here>\",\n    \"message\": \"Saved reports\"\n}"
-				}
-			]
-		},
-		{
 			"name": "Infringement check",
 			"request": {
 				"method": "POST",
@@ -91,7 +34,7 @@
 			},
 			"response": [
 				{
-					"name": "Success",
+					"name": "Infringement check",
 					"originalRequest": {
 						"method": "POST",
 						"header": [],
@@ -126,61 +69,15 @@
 						},
 						{
 							"key": "Date",
-							"value": "Mon, 04 Nov 2024 06:59:06 GMT"
+							"value": "Wed, 06 Nov 2024 08:26:48 GMT"
 						},
 						{
 							"key": "Content-Length",
-							"value": "76"
+							"value": "1380"
 						}
 					],
 					"cookie": [],
-					"body": "{\n    \"data\": \"<results here>\",\n    \"message\": \"Infringement check completed\"\n}"
-				},
-				{
-					"name": "Failure",
-					"originalRequest": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"patent_id\": \"US-RE49889-E1\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:8080/infringement-check",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"infringement-check"
-							]
-						}
-					},
-					"status": "Bad Request",
-					"code": 400,
-					"_postman_previewlanguage": "json",
-					"header": [
-						{
-							"key": "Content-Type",
-							"value": "application/json; charset=utf-8"
-						},
-						{
-							"key": "Date",
-							"value": "Mon, 04 Nov 2024 07:02:17 GMT"
-						},
-						{
-							"key": "Content-Length",
-							"value": "25"
-						}
-					],
-					"cookie": [],
-					"body": "{\n    \"error\": \"Invalid input\"\n}"
+					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Infringement check completed successfully\",\n    \"data\": {\n        \"company_name\": \"Walmart Inc.\",\n        \"infringing_products\": [\n            {\n                \"explanation\": \"The Walmart Shopping App directly infringes claims related to presenting and selecting advertisements, transmitting tracking payloads, routing to shopping lists, and adding items to the shopping list. Additionally, features like Quick Add from Ads and List Share enable users to directly add advertised products to their shopping lists, directly implementing the method of generating and/or modifying a shopping list.\",\n                \"infringement_likelihood\": \"High\",\n                \"product_name\": \"Walmart Shopping App\",\n                \"relevant_claims\": [\n                    1,\n                    7,\n                    8,\n                    13,\n                    14\n                ],\n                \"specific_features\": null\n            },\n            {\n                \"explanation\": \"Walmart+ membership offers smart shopping list synchronization features, which implies utilizing methods similar to claims 1-8 and 13-14 for generating and managing shopping lists based on advertised products.\",\n                \"infringement_likelihood\": \"Moderate\",\n                \"product_name\": \"Walmart+ Membership\",\n                \"relevant_claims\": [\n                    1,\n                    7,\n                    8,\n                    13,\n                    14\n                ],\n                \"specific_features\": null\n            }\n        ],\n        \"overall_risk_assessment\": \"Both the Walmart Shopping App and Walmart+ membership program utilize functionalities that align with the claimed methods for generating and managing shopping lists based on advertised products. This suggests a high probability of infringement for these products.\",\n        \"patent_id\": \"US-RE49889-E1\"\n    }\n}"
 				}
 			]
 		}
