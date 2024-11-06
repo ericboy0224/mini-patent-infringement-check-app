@@ -33,63 +33,9 @@ func init() {
 	dotprompt.SetDirectory("prompts")
 }
 
-func PromptGenerator(patentClaims []string, products []models.Product) (string, error) {
-	// Load the prompt template
-	prompt, err := dotprompt.Open("patent_analysis")
-	if err != nil {
-		return "", fmt.Errorf("failed to load prompt template: %w", err)
-	}
-
-	// Clean and validate inputs
-	cleanedClaims := make([]string, 0)
-	for _, claim := range patentClaims {
-		if trimmed := strings.TrimSpace(claim); trimmed != "" {
-			cleanedClaims = append(cleanedClaims, trimmed)
-		}
-	}
-
-	// Create product details array
-	productDetails := make([]map[string]string, len(products))
-	for i, product := range products {
-		productDetails[i] = map[string]string{
-			"name":        strings.TrimSpace(product.Name),
-			"description": strings.TrimSpace(product.Description),
-		}
-	}
-
-	// Prepare variables for the prompt
-	variables := map[string]any{
-		"patentClaims": strings.Join(cleanedClaims, "\n"),
-		"products":     productDetails,
-	}
-
-	// Render the prompt
-	renderedPrompt, err := prompt.RenderText(variables)
-	if err != nil {
-		return "", fmt.Errorf("failed to render prompt: %w", err)
-	}
-
-	return renderedPrompt, nil
-}
-
-func getGroqAPIKey() (string, error) {
-	apiKey := os.Getenv("GROQ_API_KEY")
-	if apiKey == "" {
-		return "", fmt.Errorf("GROQ_API_KEY environment variable is not set")
-	}
-	return apiKey, nil
-}
-
-func cleanResponseContent(content string) string {
-	content = regexp.MustCompile("(?s)^```json\\n|\\n```$").ReplaceAllString(content, "")
-	// Remove any newline escape sequences
-	content = regexp.MustCompile(`\\n`).ReplaceAllString(content, "")
-	return content
-}
-
 func AnalyzeInfringementWithGroq(patentClaims []string, products []models.Product) (*AnalyzeResult, error) {
 	// Generate the prompt for all products
-	renderedPrompt, err := PromptGenerator(patentClaims, products)
+	renderedPrompt, err := promptGenerator(patentClaims, products)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +88,60 @@ func AnalyzeInfringementWithGroq(patentClaims []string, products []models.Produc
 	}
 
 	return &result, nil
+}
+
+func promptGenerator(patentClaims []string, products []models.Product) (string, error) {
+	// Load the prompt template
+	prompt, err := dotprompt.Open("patent_analysis")
+	if err != nil {
+		return "", fmt.Errorf("failed to load prompt template: %w", err)
+	}
+
+	// Clean and validate inputs
+	cleanedClaims := make([]string, 0)
+	for _, claim := range patentClaims {
+		if trimmed := strings.TrimSpace(claim); trimmed != "" {
+			cleanedClaims = append(cleanedClaims, trimmed)
+		}
+	}
+
+	// Create product details array
+	productDetails := make([]map[string]string, len(products))
+	for i, product := range products {
+		productDetails[i] = map[string]string{
+			"name":        strings.TrimSpace(product.Name),
+			"description": strings.TrimSpace(product.Description),
+		}
+	}
+
+	// Prepare variables for the prompt
+	variables := map[string]any{
+		"patentClaims": strings.Join(cleanedClaims, "\n"),
+		"products":     productDetails,
+	}
+
+	// Render the prompt
+	renderedPrompt, err := prompt.RenderText(variables)
+	if err != nil {
+		return "", fmt.Errorf("failed to render prompt: %w", err)
+	}
+
+	return renderedPrompt, nil
+}
+
+func getGroqAPIKey() (string, error) {
+	apiKey := os.Getenv("GROQ_API_KEY")
+	if apiKey == "" {
+		return "", fmt.Errorf("GROQ_API_KEY environment variable is not set")
+	}
+	return apiKey, nil
+}
+
+func cleanResponseContent(content string) string {
+	content = regexp.MustCompile("(?s)^```json\\n|\\n```$").ReplaceAllString(content, "")
+	// Remove any newline escape sequences
+	content = regexp.MustCompile(`\\n`).ReplaceAllString(content, "")
+	return content
 }
 
 func GetExistingAnalysis(context *gin.Context, patentID, companyName string) (*models.AnalysisRecord, error) {
