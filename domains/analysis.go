@@ -1,156 +1,148 @@
 package domains
 
 import (
+	"encoding/json"
 	"fmt"
-	"sort"
+	"os"
+	"regexp"
 	"strings"
-	"time"
 
 	"github.com/ericboy0224/patlytics-takehome/models"
+	"github.com/firebase/genkit/go/plugins/dotprompt"
+	"github.com/joho/godotenv"
+	groq "github.com/jpoz/groq"
 )
 
-func AnalyzeInfringement(publicationNumber string, companyName string, patents []models.Patent, products []models.Product) (*models.PatentAnalysis, error) {
-	// Input validation
-	if len(patents) == 0 || len(products) == 0 {
-		return nil, fmt.Errorf("empty patents or products list")
+type InfringementAnalysis struct {
+	ProductName            string   `json:"product_name"`
+	InfringementLikelihood string   `json:"infringement_likelihood"`
+	RelevantClaims         []int    `json:"relevant_claims"` // Changed to `int` based on provided data
+	Explanation            string   `json:"explanation"`
+	SpecificFeatures       []string `json:"specific_features"`
+}
+
+type AnalyzeResult struct {
+	InfringingProducts    []InfringementAnalysis `json:"infringing_products"`
+	OverallRiskAssessment string                 `json:"overall_risk_assessment"`
+}
+
+func init() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		fmt.Printf("Warning: Error loading .env file: %v\n", err)
 	}
 
-	// Find the patent with the specified publication number
-	var targetPatent models.Patent
-	var found bool
-	for _, patent := range patents {
-		if patent.PublicationNumber == publicationNumber {
-			targetPatent = patent
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, fmt.Errorf("patent with publication number %s not found", publicationNumber)
-	}
+	// Set the directory where your prompt files are located
+	dotprompt.SetDirectory("prompts")
+}
 
-	// Extract claims from the target patent
-	patentClaims, err := targetPatent.ExtractClaims()
+func PromptGenerator(patentClaims []string, products []models.Product) (string, error) {
+	// Load the prompt template
+	prompt, err := dotprompt.Open("patent_analysis")
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract patent claims: %w", err)
+		return "", fmt.Errorf("failed to load prompt template: %w", err)
 	}
 
-	// Filter products by company name and analyze potential infringement
-	var infringingProducts []models.InfringingProduct
-
-	for _, product := range products {
-		// Create product claims from description
-		productClaims := []string{product.Description}
-
-		// Find common claims
-		commonClaims := findCommonClaims(patentClaims, productClaims)
-
-		if len(commonClaims) > 0 {
-			infringingProducts = append(infringingProducts, models.InfringingProduct{
-				ProductName:            product.Name,
-				InfringementLikelihood: calculateLikelihood(len(commonClaims), len(patentClaims)),
-				RelevantClaims:         commonClaims,
-				Explanation:            generateDetailedExplanation(product.Name, commonClaims),
-				SpecificFeatures:       extractFeatures(commonClaims),
-			})
+	// Clean and validate inputs
+	cleanedClaims := make([]string, 0)
+	for _, claim := range patentClaims {
+		if trimmed := strings.TrimSpace(claim); trimmed != "" {
+			cleanedClaims = append(cleanedClaims, trimmed)
 		}
 	}
 
-	// Sort products by number of matching claims (descending)
-	sort.Slice(infringingProducts, func(i, j int) bool {
-		return len(infringingProducts[i].RelevantClaims) > len(infringingProducts[j].RelevantClaims)
+	// Create product details array
+	productDetails := make([]map[string]string, len(products))
+	for i, product := range products {
+		productDetails[i] = map[string]string{
+			"name":        strings.TrimSpace(product.Name),
+			"description": strings.TrimSpace(product.Description),
+		}
+	}
+
+	// Prepare variables for the prompt
+	variables := map[string]any{
+		"patentClaims": strings.Join(cleanedClaims, "\n"),
+		"products":     productDetails,
+	}
+
+	// Render the prompt
+	renderedPrompt, err := prompt.RenderText(variables)
+	if err != nil {
+		return "", fmt.Errorf("failed to render prompt: %w", err)
+	}
+
+	return renderedPrompt, nil
+}
+
+func getGroqAPIKey() (string, error) {
+	apiKey := os.Getenv("GROQ_API_KEY")
+	if apiKey == "" {
+		return "", fmt.Errorf("GROQ_API_KEY environment variable is not set")
+	}
+	return apiKey, nil
+}
+
+func cleanResponseContent(content string) string {
+	content = regexp.MustCompile("(?s)^```json\\n|\\n```$").ReplaceAllString(content, "")
+	// Remove any newline escape sequences
+	content = regexp.MustCompile(`\\n`).ReplaceAllString(content, "")
+	return content
+}
+
+func AnalyzeInfringementWithGroq(patentClaims []string, products []models.Product) (*AnalyzeResult, error) {
+	// Generate the prompt for all products
+	renderedPrompt, err := PromptGenerator(patentClaims, products)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get API key
+	apiKey, err := getGroqAPIKey()
+	if err != nil {
+		return nil, err
+	}
+	groqClient := groq.NewClient(groq.WithAPIKey(apiKey))
+
+	// Create chat completion request
+	response, err := groqClient.CreateChatCompletion(groq.CompletionCreateParams{
+		Model: "gemma-7b-it",
+		Messages: []groq.Message{
+			{
+				Role:    "user",
+				Content: renderedPrompt,
+			},
+		},
+		Temperature: 0.3,
+		MaxTokens:   8000, // Increased for multiple products
 	})
 
-	// Take top 2 products
-	if len(infringingProducts) > 2 {
-		infringingProducts = infringingProducts[:2]
+	if err != nil {
+		return nil, fmt.Errorf("failed to make Groq request: %w", err)
 	}
 
-	// TODO use openAI for output
-	// Create analysis result
-	analysis := &models.PatentAnalysis{
-		AnalysisID:            generateAnalysisID(),
-		PatentID:              publicationNumber,
-		CompanyName:           companyName,
-		AnalysisDate:          time.Now().Format(time.RFC3339),
-		TopInfringingProducts: infringingProducts,
-		OverallRiskAssessment: calculateOverallRisk(infringingProducts),
+	if len(response.Choices) == 0 {
+		return nil, fmt.Errorf("no response from Groq")
 	}
 
-	return analysis, nil
-}
+	content := response.Choices[0].Message.Content
+	// Clean the response content
+	cleanedContent := cleanResponseContent(content)
 
-func findCommonClaims(claims1, claims2 []string) []string {
-	if len(claims1) > len(claims2) {
-		claims1, claims2 = claims2, claims1 // Use smaller slice for map
+	var result AnalyzeResult
+	if err := json.Unmarshal([]byte(cleanedContent), &result); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	claimSet := make(map[string]struct{}, len(claims1))
-	for _, claim := range claims1 {
-		claimSet[claim] = struct{}{}
-	}
-
-	common := make([]string, 0, len(claims1))
-	for _, claim := range claims2 {
-		if _, exists := claimSet[claim]; exists {
-			common = append(common, claim)
-		}
-	}
-	return common
-}
-
-// Helper functions
-func calculateLikelihood(matchingClaims, totalClaims int) string {
-	ratio := float64(matchingClaims) / float64(totalClaims)
-	switch {
-	case ratio > 0.7:
-		return "High"
-	case ratio > 0.3:
-		return "Medium"
-	default:
-		return "Low"
-	}
-}
-
-func extractFeatures(claims []string) []models.SpecificFeature {
-	features := make([]models.SpecificFeature, len(claims))
-	for i, claim := range claims {
-		features[i] = models.SpecificFeature(claim)
-	}
-	return features
-}
-
-func generateAnalysisID() string {
-	return fmt.Sprintf("ANL-%d", time.Now().UnixNano())
-}
-
-func calculateOverallRisk(products []models.InfringingProduct) string {
-	if len(products) == 0 {
-		return "Low"
-	}
-
-	highCount := 0
-	for _, p := range products {
-		if p.InfringementLikelihood == "High" {
-			highCount++
+	// Validate the likelihood values
+	for i := range result.InfringingProducts {
+		switch result.InfringingProducts[i].InfringementLikelihood {
+		case "High", "Moderate", "Low":
+			// Valid values, do nothing
+		default:
+			result.InfringingProducts[i].InfringementLikelihood = "Low"
 		}
 	}
 
-	if highCount > 0 {
-		return "High"
-	}
-	return "Medium"
-}
-
-func generateDetailedExplanation(productName string, claims []string) string {
-	if len(claims) == 0 {
-		return "No matching claims found"
-	}
-
-	return fmt.Sprintf(
-		"Product '%s' potentially infringes on %d patent claims. The matching features include: %s",
-		productName,
-		len(claims),
-		strings.Join(claims, "; "),
-	)
+	return &result, nil
 }
