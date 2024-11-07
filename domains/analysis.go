@@ -171,7 +171,16 @@ func SaveAnalysis(context *gin.Context, analysis *models.AnalysisRecord) error {
 	ctx, cancel := context.Request.Context(), func() {}
 	defer cancel()
 
-	_, err := collection.InsertOne(ctx, analysis)
+	// Get next ID
+	nextID, err := services.GetNextAnalysisID(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get next analysis ID: %w", err)
+	}
+
+	// Set the ID
+	analysis.ID = nextID
+
+	_, err = collection.InsertOne(ctx, analysis)
 	if err != nil {
 		return fmt.Errorf("failed to save analysis to MongoDB: %w", err)
 	}

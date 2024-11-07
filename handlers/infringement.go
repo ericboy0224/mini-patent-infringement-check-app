@@ -77,7 +77,7 @@ func HandleInfringementCheck(c *gin.Context) {
 	var responseData gin.H
 	if existingAnalysis != nil {
 		responseData = gin.H{
-			"analysis_id":             existingAnalysis.ID.Hex(),
+			"analysis_id":             existingAnalysis.ID,
 			"analysis_date":           existingAnalysis.AnalysisDate,
 			"patent_id":               existingAnalysis.PatentID,
 			"company_name":            existingAnalysis.CompanyName,
@@ -106,7 +106,7 @@ func HandleInfringementCheck(c *gin.Context) {
 		}
 
 		responseData = gin.H{
-			"analysis_id":             newAnalysis.ID.Hex(),
+			"analysis_id":             newAnalysis.ID,
 			"analysis_date":           newAnalysis.AnalysisDate,
 			"patent_id":               newAnalysis.PatentID,
 			"company_name":            newAnalysis.CompanyName,

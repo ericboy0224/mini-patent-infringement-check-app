@@ -117,5 +117,41 @@ func InitializeCollections(ctx context.Context) error {
 		}
 	}
 
+	// Add this after existing collection initialization code
+	counterCollection := mongoClient.Database("patlytics").Collection("counters")
+
+	// Initialize the counter if it doesn't exist
+	_, err = counterCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": "analysisId"},
+		bson.M{"$setOnInsert": bson.M{"seq": int64(0)}},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize counter: %w", err)
+	}
+
 	return nil
+}
+
+func GetNextAnalysisID(ctx context.Context) (int64, error) {
+	counterCollection := mongoClient.Database("patlytics").Collection("counters")
+
+	result := counterCollection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": "analysisId"},
+		bson.M{"$inc": bson.M{"seq": int64(1)}},
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	)
+
+	var counter struct {
+		ID  string `bson:"_id"`
+		Seq int64  `bson:"seq"`
+	}
+
+	if err := result.Decode(&counter); err != nil {
+		return 0, fmt.Errorf("failed to get next ID: %w", err)
+	}
+
+	return counter.Seq, nil
 }

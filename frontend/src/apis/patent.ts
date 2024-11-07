@@ -18,7 +18,7 @@ interface InfringementResponse {
   message: string
   data: {
     analysis_date: string
-    analysis_id: string
+    analysis_id: number
     company_name: string
     infringing_products: InfringingProduct[]
     overall_risk_assessment: string
@@ -27,7 +27,7 @@ interface InfringementResponse {
 }
 
 export interface InfringementResult {
-  productId: string
+  productId: number
   productName: string
   companyName: string
   confidenceScore: number

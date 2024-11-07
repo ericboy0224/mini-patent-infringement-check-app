@@ -8,11 +8,11 @@ interface ListBlockProps {
     patentId: string
 }
 
-export function ListBlock({ 
-    searchResults, 
-    analysisDate, 
+export function ListBlock({
+    searchResults,
+    analysisDate,
     overallRiskAssessment,
-    patentId 
+    patentId
 }: ListBlockProps) {
     return (
         <div className="mt-6 space-y-4 text-white">
@@ -51,15 +51,15 @@ export function ListBlock({
                                 {(product.confidenceScore * 100).toFixed(0)}%
                             </span>
                         </div>
-                        <Progress 
-                            value={product.confidenceScore * 100} 
+                        <Progress
+                            value={product.confidenceScore * 100}
                             className="h-1.5"
                         />
                     </div>
                     <div className="text-sm mt-2">
                         <p>Matched Features:</p>
                         <ul className="list-disc list-inside mt-1">
-                            {product.matchedFeatures.map((feature, index) => (
+                            {product.matchedFeatures && product.matchedFeatures.map((feature, index) => (
                                 <li key={index}>{feature}</li>
                             ))}
                         </ul>

@@ -52,7 +52,6 @@ restart: stop run
 # Frontend commands
 frontend-install:
 	cd frontend && pnpm install
-	cd frontend && pnpm build
 
 # One-command setup for first time run
 setup:

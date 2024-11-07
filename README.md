@@ -1,7 +1,16 @@
 # Patlytics Takehome
 
+**Overall**
+
 ![Result](/img/result.png)
 
+**Fuzzy Search**
+
+![Result](/img/fuzzy-1.png)
+![Result](/img/fuzzy-2.png)
+
+**Saved Search**
+![Result](/img/saved.png)
 
 A full-stack patent infringement check application that analyzes potential patent infringements by comparing patent claims against company products.
 
