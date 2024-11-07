@@ -8,6 +8,7 @@ export function usePatentSearch() {
     mutationFn: searchInfringingProducts,
     onError: (error: Error) => {
       console.error('Patent search failed:', error)
-    }
+    },
+    gcTime: 0
   })
 } 

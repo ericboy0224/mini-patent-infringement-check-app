@@ -3,6 +3,7 @@ import { SearchBlock } from '@/components/SearchBlock'
 import { useSearchBlock } from '@/components/SearchBlock/hooks/useSearchBlock'
 import { Button } from '@/components/ui/button'
 import { Star, StarIcon } from 'lucide-react'
+import { SavedSearchItem } from '@/components/SavedSearchItem'
 
 function Home() {
   const [states, operations] = useSearchBlock()
@@ -20,27 +21,11 @@ function Home() {
           <h3 className="text-lg font-semibold">Saved Searches</h3>
           <div className="space-y-2">
             {states.savedSearches.map((search, index) => (
-              <button
+              <SavedSearchItem
                 key={index}
-                onClick={() => {
-                  operations.setPatentId(search.patent_id)
-                  operations.setCompanyName(search.company_name)
-                  operations.handleSearch()
-                }}
-                className="w-full p-2 text-left bg-gray-700 hover:bg-gray-600 rounded-md transition-colors"
-              >
-                <div className="text-sm">
-                  {search.patent_id && (
-                    <span className="text-blue-400">Patent: {search.patent_id}</span>
-                  )}
-                  {search.patent_id && search.company_name && (
-                    <span className="mx-2">|</span>
-                  )}
-                  {search.company_name && (
-                    <span className="text-green-400">Company: {search.company_name}</span>
-                  )}
-                </div>
-              </button>
+                search={search}
+                onSelect={operations.handleSelect}
+              />
             ))}
           </div>
         </div>

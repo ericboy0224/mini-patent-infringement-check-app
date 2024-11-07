@@ -22,6 +22,7 @@ interface SearchBlockOperations {
   setCompanyName: (value: string) => void
   handleSearch: () => Promise<void>
   handleSave: () => void
+  handleSelect: (search: PatentSearchParams) => void
 }
 
 export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
@@ -30,9 +31,9 @@ export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
   const [previousPatentId, setPreviousPatentId] = useState<string>()
   const [previousCompanyName, setPreviousCompanyName] = useState<string>()
   const [savedSearches, setSavedSearches] = useState<PatentSearchParams[]>([])
-  const { mutate, isPending, error, data } = usePatentSearch()
+  const { mutate, isPending, error, data, reset } = usePatentSearch()
   const showSaveButton = !!(data?.length && previousPatentId && previousCompanyName);
-  
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
@@ -40,20 +41,33 @@ export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
     }
   }, [])
 
-  const handleSearch = async () => {
-    if (!patentId && !companyName) {
+  const handleSearch = async (search?: PatentSearchParams) => {
+    if (!patentId && !companyName && !search) {
       console.warn('Please enter at least one search term')
       return
     }
 
+    reset();
+
+    let patent_id = patentId;
+    let company_name = companyName
+
+    if (search && search.company_name && search.patent_id) {
+      patent_id = search.patent_id;
+      company_name = search.company_name;
+    }
+
     mutate(
-      { patent_id: patentId, company_name: companyName },
+      {
+        patent_id,
+        company_name
+      },
       {
         onSuccess: () => {
           setPreviousPatentId(patentId)
           setPreviousCompanyName(companyName)
         }
-      }
+      },
     )
   }
 
@@ -79,9 +93,15 @@ export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSearches))
   }
 
+  const handleSelect = (search: PatentSearchParams) => {
+    setPatentId(search.patent_id)
+    setCompanyName(search.company_name)
+    handleSearch(search);
+  }
+
   const isCurrentSearchSaved = savedSearches.some(
-    search => 
-      search.patent_id === previousPatentId && 
+    search =>
+      search.patent_id === previousPatentId &&
       search.company_name === previousCompanyName
   );
 
@@ -102,7 +122,8 @@ export function useSearchBlock(): [SearchBlockStates, SearchBlockOperations] {
     setPatentId,
     setCompanyName,
     handleSearch,
-    handleSave
+    handleSave,
+    handleSelect
   }
 
   return [states, operations]
