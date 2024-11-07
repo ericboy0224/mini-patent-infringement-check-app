@@ -76,7 +76,7 @@ func InitializeCollections(ctx context.Context) error {
 			RawSourceURL:      patent.RawSourceURL,
 			Assignee:          patent.Assignee,
 			Inventors:         patent.Inventors,
-			// ... map other fields ...
+			Claims:            patent.Claims,
 		}
 	}
 

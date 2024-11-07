@@ -82,4 +82,34 @@ function convertLikelihoodToScore(likelihood: string): number {
     default:
       return 0.5
   }
+}
+
+export interface PatentsResponse {
+  status: string
+  message: string
+  data: string[]
+}
+
+export interface CompaniesResponse {
+  status: string
+  message: string
+  data: string[]
+}
+
+export async function getPatents(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/patents`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  const result: PatentsResponse = await response.json()
+  return result.data
+}
+
+export async function getCompanies(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/companies`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  const result: CompaniesResponse = await response.json()
+  return result.data
 } 

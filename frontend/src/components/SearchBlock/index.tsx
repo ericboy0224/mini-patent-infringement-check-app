@@ -1,6 +1,8 @@
-import { Input } from '@/components/ui/input'
+import { InfringementResult } from '@/apis/patent'
 import { Button } from '@/components/ui/button'
-import { type InfringementResult } from '@/apis/patent'
+import { useCompaniesList, usePatentsList } from '@/features/patents/hooks/usePatentsList'
+
+import { SearchableDropdown } from './SearchableDropdown'
 
 interface SearchBlockProps {
   states: {
@@ -21,6 +23,9 @@ interface SearchBlockProps {
 }
 
 export function SearchBlock({ states, operations }: SearchBlockProps) {
+  const { data: patents, isLoading: isLoadingPatents } = usePatentsList()
+  const { data: companies, isLoading: isLoadingCompanies } = useCompaniesList()
+  
   const { 
     patentId, 
     companyName, 
@@ -32,35 +37,25 @@ export function SearchBlock({ states, operations }: SearchBlockProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 items-end">
-        <div className="flex-1 space-y-2">
-          <label htmlFor="patentId" className="text-sm font-medium text-gray-300">
-            Patent ID
-          </label>
-          <Input
-            id="patentId"
-            type="text"
-            value={patentId}
-            onChange={(e) => setPatentId(e.target.value)}
-            placeholder="Enter patent ID"
-            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
-            disabled={isSearching}
-          />
-        </div>
+        <SearchableDropdown
+          items={patents || []}
+          value={patentId}
+          onChange={setPatentId}
+          placeholder="Select patent ID"
+          label="Patent ID"
+          disabled={isSearching}
+          isLoading={isLoadingPatents}
+        />
 
-        <div className="flex-1 space-y-2">
-          <label htmlFor="companyName" className="text-sm font-medium text-gray-300">
-            Company Name
-          </label>
-          <Input
-            id="companyName"
-            type="text"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="Enter company name"
-            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
-            disabled={isSearching}
-          />
-        </div>
+        <SearchableDropdown
+          items={companies || []}
+          value={companyName}
+          onChange={setCompanyName}
+          placeholder="Select company"
+          label="Company Name"
+          disabled={isSearching}
+          isLoading={isLoadingCompanies}
+        />
 
         <div className="flex gap-2">
           <Button
