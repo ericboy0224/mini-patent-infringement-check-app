@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/ericboy0224/patlytics-takehome/domains"
 	"github.com/ericboy0224/patlytics-takehome/models"
-	"github.com/ericboy0224/patlytics-takehome/utils"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/ericboy0224/patlytics-takehome/services"
 )
 
 func HandleInfringementCheck(c *gin.Context) {
@@ -32,44 +33,31 @@ func HandleInfringementCheck(c *gin.Context) {
 		return
 	}
 
-	// Load patents and products
-	projectRoot := "."
-	pathStr := filepath.Join(projectRoot, "data", "patents.json")
-	patents, err := utils.LoadPatents(pathStr)
-	if err != nil {
-		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to load patents: %v", err)))
-		return
-	}
-
 	// Find target patent
+	patentsCollection := services.GetPatentsCollection()
 	var targetPatent models.Patent
-	for _, patent := range patents {
-		if patent.PublicationNumber == request.PublicationNumber {
-			targetPatent = patent
-			break
-		}
-	}
-	if targetPatent.PublicationNumber == "" {
-		c.JSON(404, NewErrorResponse("Patent not found"))
-		return
-	}
-
-	companies, err := utils.LoadCompanyProducts(filepath.Join(projectRoot, "data", "company_products.json"))
+	err := patentsCollection.FindOne(c, bson.M{"publication_number": request.PublicationNumber}).Decode(&targetPatent)
 	if err != nil {
-		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to load company products: %v", err)))
+		if err == mongo.ErrNoDocuments {
+			c.JSON(404, NewErrorResponse("Patent not found"))
+			return
+		}
+		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to fetch patent: %v", err)))
 		return
 	}
 
-	// Filter companies based on the requested company name
-	var filteredCompanies []*models.Company
-	for _, company := range companies {
-		if strings.Contains(strings.ToUpper(company.Name), strings.ToUpper(request.CompanyName)) {
-			filteredCompanies = append(filteredCompanies, &company)
+	// Find company
+	companiesCollection := services.GetCompaniesCollection()
+	var company models.Company
+	err = companiesCollection.FindOne(c, bson.M{
+		"name": bson.M{"$regex": request.CompanyName, "$options": "i"},
+	}).Decode(&company)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(404, NewErrorResponse("Company not found"))
+			return
 		}
-	}
-
-	if len(filteredCompanies) == 0 {
-		c.JSON(404, NewErrorResponse("Company not found"))
+		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to fetch company: %v", err)))
 		return
 	}
 
@@ -80,7 +68,7 @@ func HandleInfringementCheck(c *gin.Context) {
 	}
 
 	// Check if analysis exists in MongoDB
-	existingAnalysis, err := domains.GetExistingAnalysis(c, request.PublicationNumber, filteredCompanies[0].Name)
+	existingAnalysis, err := domains.GetExistingAnalysis(c, request.PublicationNumber, company.Name)
 	if err != nil {
 		c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to check existing analysis: %v", err)))
 		return
@@ -97,7 +85,7 @@ func HandleInfringementCheck(c *gin.Context) {
 			"overall_risk_assessment": existingAnalysis.OverallRiskAssessment,
 		}
 	} else {
-		analysis, err := domains.AnalyzeInfringementWithGroq(claims, filteredCompanies[0].Products)
+		analysis, err := domains.AnalyzeInfringementWithGroq(claims, company.Products)
 		if err != nil {
 			c.JSON(500, NewErrorResponse(fmt.Sprintf("Failed to analyze products: %v", err)))
 			return
@@ -106,7 +94,7 @@ func HandleInfringementCheck(c *gin.Context) {
 		// Create new analysis record
 		newAnalysis := &models.AnalysisRecord{
 			PatentID:              request.PublicationNumber,
-			CompanyName:           filteredCompanies[0].Name,
+			CompanyName:           company.Name,
 			AnalysisDate:          time.Now(),
 			InfringingProducts:    analysis.InfringingProducts,
 			OverallRiskAssessment: analysis.OverallRiskAssessment,

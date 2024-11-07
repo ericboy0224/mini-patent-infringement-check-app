@@ -56,15 +56,7 @@ A full-stack patent infringement check application that analyzes potential paten
 ```
 
 ## Setup
-1. Clone the repository
-2. Create a `.env` file with the following variables:
-```
-GROQ_API_KEY=your_groq_api_key
-MONGODB_URI=mongodb://mongodb:27017
-VITE_DEV_API_URL=http://localhost:8080
-```
-
-3. Build and run the application:
+Build and run the application(visit http://localhost:8080):
 ```bash
 make setup
 ```

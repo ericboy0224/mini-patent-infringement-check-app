@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"patent_id\": \"US-RE49889-E1\",\n  \"company_name\": \"Walmart\"\n}",
+					"raw": "{\n  \"patent_id\": \"US-RE49889-E1\",\n  \"company_name\": \"Husqvarna\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -21,13 +21,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/infringement-check",
+					"raw": "http://localhost:8080/patlytics/v1/infringement-check",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
+						"patlytics",
+						"v1",
 						"infringement-check"
 					]
 				}
@@ -48,13 +50,15 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/infringement-check",
+							"raw": "http://localhost:8080/patlytics/v1/infringement-check",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
+								"patlytics",
+								"v1",
 								"infringement-check"
 							]
 						}
@@ -69,15 +73,137 @@
 						},
 						{
 							"key": "Date",
-							"value": "Wed, 06 Nov 2024 08:26:48 GMT"
+							"value": "Wed, 06 Nov 2024 09:36:31 GMT"
 						},
 						{
 							"key": "Content-Length",
-							"value": "1380"
+							"value": "1665"
 						}
 					],
 					"cookie": [],
-					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Infringement check completed successfully\",\n    \"data\": {\n        \"company_name\": \"Walmart Inc.\",\n        \"infringing_products\": [\n            {\n                \"explanation\": \"The Walmart Shopping App directly infringes claims related to presenting and selecting advertisements, transmitting tracking payloads, routing to shopping lists, and adding items to the shopping list. Additionally, features like Quick Add from Ads and List Share enable users to directly add advertised products to their shopping lists, directly implementing the method of generating and/or modifying a shopping list.\",\n                \"infringement_likelihood\": \"High\",\n                \"product_name\": \"Walmart Shopping App\",\n                \"relevant_claims\": [\n                    1,\n                    7,\n                    8,\n                    13,\n                    14\n                ],\n                \"specific_features\": null\n            },\n            {\n                \"explanation\": \"Walmart+ membership offers smart shopping list synchronization features, which implies utilizing methods similar to claims 1-8 and 13-14 for generating and managing shopping lists based on advertised products.\",\n                \"infringement_likelihood\": \"Moderate\",\n                \"product_name\": \"Walmart+ Membership\",\n                \"relevant_claims\": [\n                    1,\n                    7,\n                    8,\n                    13,\n                    14\n                ],\n                \"specific_features\": null\n            }\n        ],\n        \"overall_risk_assessment\": \"Both the Walmart Shopping App and Walmart+ membership program utilize functionalities that align with the claimed methods for generating and managing shopping lists based on advertised products. This suggests a high probability of infringement for these products.\",\n        \"patent_id\": \"US-RE49889-E1\"\n    }\n}"
+					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Infringement check completed successfully\",\n    \"data\": {\n        \"analysis_date\": \"2024-11-06T09:36:31.556232884Z\",\n        \"analysis_id\": \"000000000000000000000000\",\n        \"company_name\": \"Walmart Inc.\",\n        \"infringing_products\": [\n            {\n                \"product_name\": \"Walmart Shopping App\",\n                \"infringement_likelihood\": \"High\",\n                \"relevant_claims\": [\n                    1,\n                    3,\n                    4,\n                    5,\n                    6,\n                    7,\n                    8,\n                    9,\n                    10,\n                    11,\n                    12\n                ],\n                \"explanation\": \"The Walmart Shopping App directly integrates with the advertised products displayed on mobile devices, allowing users to seamlessly add them to their online shopping lists. This aligns with claims 1-12, which relate to methods and systems for generating digital shopping lists from advertisements displayed on mobile devices.\",\n                \"specific_features\": [\n                    \"Integrated shopping list and advertisement features\",\n                    \"Automatic addition of advertised products to shopping list\"\n                ]\n            },\n            {\n                \"product_name\": \"Walmart+ Membership\",\n                \"infringement_likelihood\": \"Moderate\",\n                \"relevant_claims\": [\n                    1,\n                    3,\n                    4,\n                    5,\n                    6,\n                    7,\n                    8,\n                    9,\n                    10,\n                    11,\n                    12\n                ],\n                \"explanation\": \"Walmart+ offers smart shopping list synchronization features, which aligns with claims 1-12. However, the level of infringement might be lower than the Walmart Shopping App due to the subscription-based nature of the service.\",\n                \"specific_features\": [\n                    \"Smart shopping list synchronization\",\n                    \"Integration with advertisements displayed on mobile devices\"\n                ]\n            }\n        ],\n        \"overall_risk_assessment\": \"The top two products analyzed, Walmart Shopping App and Walmart+ Membership, both offer features that align with the claimed methods and systems for generating digital shopping lists from advertisements displayed on mobile devices. This suggests a high risk of patent infringement for both products.\",\n        \"patent_id\": \"US-RE49889-E1\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Patent list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/patlytics/v1/patents",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"patlytics",
+						"v1",
+						"patents"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Patent list",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/patlytics/v1/patents",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"patlytics",
+								"v1",
+								"patents"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 07 Nov 2024 01:55:17 GMT"
+						},
+						{
+							"key": "Content-Length",
+							"value": "1775"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Patent list retrieved successfully\",\n    \"data\": [\n        \"US-RE49889-E1\",\n        \"US-11950524-B2\",\n        \"US-11950528-B2\",\n        \"US-11950527-B2\",\n        \"US-11950529-B2\",\n        \"US-11950525-B2\",\n        \"US-11950534-B1\",\n        \"US-11950530-B2\",\n        \"US-11950531-B1\",\n        \"US-11950542-B2\",\n        \"US-11950526-B2\",\n        \"US-11950532-B2\",\n        \"US-11950537-B2\",\n        \"US-11950544-B2\",\n        \"US-11950536-B2\",\n        \"US-11950533-B2\",\n        \"US-11950538-B2\",\n        \"US-11950552-B2\",\n        \"US-11950535-B2\",\n        \"US-11950540-B2\",\n        \"US-11950539-B2\",\n        \"US-11950553-B2\",\n        \"US-11950543-B2\",\n        \"US-11950558-B2\",\n        \"US-11950541-B2\",\n        \"US-11950546-B2\",\n        \"US-11950555-B2\",\n        \"US-11950545-B2\",\n        \"US-11950548-B2\",\n        \"US-11950559-B2\",\n        \"US-11950547-B2\",\n        \"US-11950556-B1\",\n        \"US-11950549-B2\",\n        \"US-11950560-B2\",\n        \"US-11950551-B2\",\n        \"US-11950564-B1\",\n        \"US-11950550-B2\",\n        \"US-11950568-B2\",\n        \"US-11950563-B2\",\n        \"US-11950557-B2\",\n        \"US-11950572-B2\",\n        \"US-11950565-B2\",\n        \"US-11950554-B2\",\n        \"US-11950567-B2\",\n        \"US-11950576-B2\",\n        \"US-11950566-B2\",\n        \"US-11950561-B2\",\n        \"US-11950571-B2\",\n        \"US-11950582-B2\",\n        \"US-11950570-B1\",\n        \"US-11950562-B2\",\n        \"US-11950583-B2\",\n        \"US-11950580-B2\",\n        \"US-11950573-B2\",\n        \"US-11950569-B2\",\n        \"US-11950575-B2\",\n        \"US-11950574-B1\",\n        \"US-11950577-B2\",\n        \"US-11950579-B2\",\n        \"US-11950581-B1\",\n        \"US-11950578-B2\",\n        \"US-11950586-B1\",\n        \"US-11950587-B1\",\n        \"US-11950585-B2\",\n        \"US-11950584-B1\",\n        \"US-11950588-B2\",\n        \"US-11950592-B2\",\n        \"US-11950589-B2\",\n        \"US-11950595-B2\",\n        \"US-11950591-B2\",\n        \"US-11950594-B2\",\n        \"US-11950593-B2\",\n        \"US-11950590-B2\",\n        \"US-11950599-B2\",\n        \"US-11950596-B2\",\n        \"US-11950598-B2\",\n        \"US-11950597-B2\",\n        \"US-11950601-B2\",\n        \"US-11950609-B2\",\n        \"US-11950600-B2\",\n        \"US-11950606-B2\",\n        \"US-11950603-B2\",\n        \"US-11950602-B2\",\n        \"US-11950607-B2\",\n        \"US-11950604-B2\",\n        \"US-11950610-B2\",\n        \"US-11950608-B2\",\n        \"US-11950605-B2\",\n        \"US-11950611-B2\",\n        \"US-11950613-B1\",\n        \"US-11950612-B2\",\n        \"US-11950614-B2\",\n        \"US-11950619-B2\",\n        \"US-11950625-B2\",\n        \"US-11950616-B2\",\n        \"US-11950620-B2\",\n        \"US-11950628-B2\",\n        \"US-11950629-B2\",\n        \"US-11950624-B2\",\n        \"US-11950631-B2\"\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Company list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/patlytics/v1/companies",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"patlytics",
+						"v1",
+						"companies"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Company list",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/patlytics/v1/companies",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"patlytics",
+								"v1",
+								"companies"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 07 Nov 2024 01:56:31 GMT"
+						},
+						{
+							"key": "Content-Length",
+							"value": "214"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"message\": \"Company list retrieved successfully\",\n    \"data\": [\n        \"Walmart Inc.\",\n        \"John Deere\",\n        \"Husqvarna\",\n        \"CLAAS\",\n        \"Target Corporation\",\n        \"CNH Industrial (Case IH)\",\n        \"Kroger Co.\",\n        \"AGCO Corporation\",\n        \"iRobot\"\n    ]\n}"
 				}
 			]
 		}
